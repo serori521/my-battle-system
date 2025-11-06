@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ターン制バトルゲーム</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1, h3 {
+            text-align: center;
+            color: #333;
+            margin-top: 0;
+        }
+        
+        .battle-display-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+        
+        .stats-box {
+            flex: 0 0 200px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .player-stats {
+            background-color: #e3f2fd;
+            border: 2px solid #2196f3;
+        }
+        
+        .enemy-stats {
+            background-color: #ffebee;
+            border: 2px solid #f44336;
+        }
+        
+        .stat-item {
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .blocks-container {
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .blocks-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .blocks {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 20px;
+            position: relative;
+            height: 54px;
+        }
+        
+        .block {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .block.filled {
+            background-color: #4caf50;
+            border-color: #388e3c;
+            color: white;
+        }
+        
+        .block-number {
+            font-size: 10px;
+            color: #666;
+            position: absolute;
+            top: -18px;
+        }
+        .block.filled .block-number {
+            color: #333;
+        }
+        
+        .actions-container {
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .actions-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .action-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background-color: #2196f3;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+            white-space: pre-line;
+            min-width: 120px;
+        }
+        
+        .action-btn:hover {
+            background-color: #1976d2;
+        }
+        
+        .action-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+        }
+        
+        .control-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .reset-btn {
+            background-color: #ff9800;
+            color: white;
+        }
+        
+        .reset-btn:hover {
+            background-color: #f57c00;
+        }
+        
+        .battle-btn {
+            background-color: #4caf50;
+            color: white;
+        }
+        
+        .battle-btn:hover {
+            background-color: #388e3c;
+        }
+        
+        .game-reset-btn {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        .game-reset-btn:hover {
+            background-color: #d32f2f;
+        }
+        
+        .current-log-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        
+        .current-log-card {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+            border: 3px solid #2196f3;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            font-size: 14px;
+            text-align: left;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .log-index {
+            font-weight: bold;
+            color: #2196f3;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .log-actions {
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .log-events {
+            margin: 10px 0;
+            color: #555;
+            line-height: 1.5;
+        }
+        
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .error {
+            background-color: #ffebee;
+            color: #d32f2f;
+            border: 1px solid #f44336;
+        }
+        
+        .success {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+            border: 1px solid #4caf50;
+        }
+        
+        .win {
+            background-color: #fff3e0;
+            color: #ef6c00;
+            border: 1px solid #ff9800;
+        }
+
+        .settings-container {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ターン制バトルゲーム</h1>
+        <div class="turn-info" style="text-align: center; margin-bottom: 20px; font-size: 18px; font-weight: bold; color: #2196f3;">
+            ターン <span id="turn-number">1</span>
+        </div>
+        
+        <div class="battle-display-container">
+            <div class="stats-box player-stats">
+                <h3>プレイヤー</h3>
+                <div class="stat-item">HP: <span id="player-hp">150</span></div>
+                <div class="stat-item">攻撃力: <span id="player-attack">17</span></div>
+                <div class="stat-item">防御力: <span id="player-defense">10</span></div>
+            </div>
+            
+            <div class="current-log-container" id="current-log-container" style="display: none;">
+                <div class="current-log-card" id="current-log-card"></div>
+            </div>
+            
+            <div class="stats-box enemy-stats">
+                <h3>敵</h3>
+                <div class="stat-item">HP: <span id="enemy-hp">150</span></div>
+                <div class="stat-item">攻撃力: <span id="enemy-attack">20</span></div>
+                <div class="stat-item">防御力: <span id="enemy-defense">10</span></div>
+            </div>
+        </div>
+        
+        <div class="blocks-container">
+            <div class="blocks-title">アクションタイムライン</div>
+            <div class="blocks" id="blocks"></div>
+            <div id="enemy-preview" style="color: #f44336; font-weight: bold; margin-top: 10px; height: 1em;"></div>
+        </div>
+        
+        <div class="actions-container">
+            <div class="actions-title">アクション選択</div>
+            <div class="actions" id="actions"></div>
+        </div>
+        
+        <div class="controls">
+            <button class="control-btn reset-btn" onclick="resetActions()" id="reset-actions-btn">アクションリセット</button>
+            <button class="control-btn battle-btn" onclick="startBattle()" id="battle-btn">戦闘開始</button>
+            <button class="control-btn battle-btn" onclick="nextLog()" id="next-log-btn" style="display: none;">次へ</button>
+            <button class="control-btn reset-btn" onclick="skipLogs()" id="skip-logs-btn" style="display: none;">スキップ</button>
+            <button class="control-btn game-reset-btn" onclick="resetGame()">ゲームリセット</button>
+        </div>
+        
+        <div id="message-area"></div>
+
+        <div class="settings-container">
+            <h3>拡張機能設定</h3>
+            <label>
+                <input type="checkbox" id="use_combo_system" onchange="updateConfig()"> コマンドスキル
+            </label>
+            <label style="margin-left: 15px;">
+                <input type="checkbox" id="use_enemy_preview" onchange="updateConfig()"> 敵の行動予告
+            </label>
+        </div>
+    </div>
+
+    <script>
+        // --- グローバル変数 ---
+        let fullState = {}; // サーバーからのレスポンス全体を保持
+
+        // --- API呼び出し ---
+        async function fetchGameState() {
+            const response = await fetch('/api/game_state');
+            fullState = await response.json();
+            updateDisplay();
+        }
+
+        async function postData(url, data = {}) {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return response.json();
+        }
+
+        // --- UI更新 ---
+        function updateDisplay() {
+            if (!fullState || !fullState.gameState) return;
+            const state = fullState.gameState;
+            
+            document.getElementById('turn-number').textContent = state.turn_number;
+            
+            updateStats(state);
+            updateBlocks(state, fullState.blockMax, fullState.costs);
+            updateActionButtons(state, fullState.costs);
+            updateButtonVisibility(state);
+            updateCurrentLog(state);
+            updateEnemyPreview(state);
+            updateConfigCheckboxes(fullState.gameConfig);
+        }
+
+        function updateStats(state) {
+            let player = state.player;
+            let enemy = state.enemy;
+
+            if (state.showing_logs && state.current_log_index < state.battle_logs.length) {
+                const log = state.battle_logs[state.current_log_index];
+                player = log.player_stats;
+                enemy = log.enemy_stats;
+            }
+
+            document.getElementById('player-hp').textContent = player.HP;
+            document.getElementById('player-attack').textContent = player.attack;
+            document.getElementById('player-defense').textContent = player.defense;
+            document.getElementById('enemy-hp').textContent = enemy.HP;
+            document.getElementById('enemy-attack').textContent = enemy.attack;
+            document.getElementById('enemy-defense').textContent = enemy.defense;
+
+            // HP低下時の視覚効果
+            const playerHPSpan = document.getElementById('player-hp');
+            playerHPSpan.style.color = player.HP <= 30 ? '#f44336' : '';
+            playerHPSpan.style.fontWeight = player.HP <= 30 ? 'bold' : '';
+            const enemyHPSpan = document.getElementById('enemy-hp');
+            enemyHPSpan.style.color = enemy.HP <= 30 ? '#f44336' : '';
+            enemyHPSpan.style.fontWeight = enemy.HP <= 30 ? 'bold' : '';
+        }
+
+        function updateBlocks(state, blockMax, costs) {
+            const blocksContainer = document.getElementById('blocks');
+            blocksContainer.innerHTML = '';
+            
+            for (let i = 0; i < blockMax; i++) {
+                const block = document.createElement('div');
+                block.className = 'block';
+                block.innerHTML = `<span class="block-number">${i + 1}</span>`;
+                blocksContainer.appendChild(block);
+            }
+            
+            let currentCost = 0;
+            for (const [cumulative, actionName] of state.player_actions) {
+                const actionCost = costs[actionName];
+                for (let i = currentCost; i < cumulative && i < blockMax; i++) {
+                    blocksContainer.children[i].classList.add('filled');
+                }
+                if (cumulative <= blockMax) {
+                    const lastBlock = blocksContainer.children[cumulative - 1];
+                    lastBlock.innerHTML += `<div style="font-size: 10px; margin-top: 2px;">${actionName.substring(0, 2)}</div>`;
+                }
+                currentCost = cumulative;
+            }
+        }
+
+        function updateActionButtons(state, costs) {
+            const actionsContainer = document.getElementById('actions');
+            // 初回描画時のみボタンを生成
+            if (actionsContainer.children.length > 0) return;
+            
+            actionsContainer.innerHTML = '';
+            for (const [actionName, cost] of Object.entries(costs)) {
+                const button = document.createElement('button');
+                button.className = 'action-btn';
+                button.textContent = `${actionName}\n(コスト:${cost})`;
+                button.onclick = () => addAction(actionName);
+                actionsContainer.appendChild(button);
+            }
+        }
+
+        function updateButtonVisibility(state) {
+            const isBattlePhase = state.showing_logs || state.game_over;
+            document.getElementById('battle-btn').style.display = isBattlePhase ? 'none' : 'inline-block';
+            document.getElementById('reset-actions-btn').style.display = isBattlePhase ? 'none' : 'inline-block';
+            document.getElementById('next-log-btn').style.display = state.showing_logs ? 'inline-block' : 'none';
+            document.getElementById('skip-logs-btn').style.display = state.showing_logs ? 'inline-block' : 'none';
+            document.querySelectorAll('.action-btn').forEach(btn => btn.disabled = isBattlePhase);
+        }
+
+        function updateCurrentLog(state) {
+            const logContainer = document.getElementById('current-log-container');
+            const logCard = document.getElementById('current-log-card');
+            
+            if (state.showing_logs && state.current_log_index < state.battle_logs.length) {
+                const log = state.battle_logs[state.current_log_index];
+                logContainer.style.display = 'flex';
+                let html = `<div class="log-index">[${log.index}] 行動</div>`;
+                if (log.player_action || log.enemy_action) {
+                    html += `<div class="log-actions">P: ${log.player_action || '－'} | E: ${log.enemy_action || '－'}</div>`;
+                }
+                if (log.events.length > 0) {
+                    html += `<div class="log-events">${log.events.map(e => `• ${e}`).join('<br>')}</div>`;
+                }
+                html += `<div style="text-align: center; margin-top: 10px; color: #666; font-style: italic;">
+                         ${state.current_log_index + 1} / ${state.battle_logs.length}</div>`;
+                logCard.innerHTML = html;
+            } else {
+                logContainer.style.display = 'none';
+            }
+        }
+
+        function updateEnemyPreview(state) {
+            const enemyPreviewEl = document.getElementById('enemy-preview');
+            if (state.enemy_action_preview && state.enemy_action_preview.length > 0) {
+                enemyPreviewEl.textContent = '敵の行動予告: ' + state.enemy_action_preview.join(', ');
+            } else {
+                enemyPreviewEl.textContent = '';
+            }
+        }
+        
+        function updateConfigCheckboxes(gameConfig) {
+            if (!gameConfig) return;
+            document.getElementById('use_combo_system').checked = gameConfig.use_combo_system;
+            document.getElementById('use_enemy_preview').checked = gameConfig.use_enemy_preview;
+        }
+
+        function showMessage(message, type = 'error') {
+            const messageArea = document.getElementById('message-area');
+            messageArea.innerHTML = `<div class="message ${type}">${message}</div>`;
+            setTimeout(() => { messageArea.innerHTML = '' }, 3000);
+        }
+
+        // --- イベントハンドラ ---
+        async function addAction(actionName) {
+            const result = await postData('/api/add_action', { action: actionName });
+            if (result.success) await fetchGameState();
+            else showMessage(result.error, 'error');
+        }
+
+        async function resetActions() {
+            await postData('/api/reset_actions');
+            await fetchGameState();
+        }
+
+        async function resetGame() {
+            await postData('/api/reset_game');
+            await fetchGameState();
+            showMessage('ゲームをリセットしました', 'success');
+        }
+
+        async function startBattle() {
+            const result = await postData('/api/start_battle');
+            if (result.success) {
+                await fetchGameState();
+                showMessage('戦闘開始！', 'success');
+            } else {
+                showMessage(result.error, 'error');
+            }
+        }
+        
+        async function nextLog() {
+            const result = await postData('/api/next_log');
+            if (!result.success) return showMessage(result.error, 'error');
+
+            if (result.finished) {
+                // finishedフラグが立ったら、stateを再取得して最終結果を判定
+                await fetchGameState();
+                if (fullState.gameState.game_over) {
+                    const message = fullState.gameState.winner === 'player' ? '🎉 プレイヤーの勝利！' : '💀 プレイヤーの敗北...';
+                    const type = fullState.gameState.winner === 'player' ? 'win' : 'error';
+                    showMessage(message, type);
+                } else {
+                    showMessage(`ターン ${fullState.gameState.turn_number} へ！`, 'success');
+                }
+            } else {
+                // ログがまだ続く場合は、現在のstateを更新するだけでよい
+                // サーバー側でインデックスは進んでいるので再取得
+                await fetchGameState();
+            }
+        }
+
+        async function skipLogs() {
+            await postData('/api/skip_logs');
+            await fetchGameState();
+             if (fullState.gameState.game_over) {
+                const message = fullState.gameState.winner === 'player' ? '🎉 プレイヤーの勝利！' : '💀 プレイヤーの敗北...';
+                const type = fullState.gameState.winner === 'player' ? 'win' : 'error';
+                showMessage(message, type);
+            } else {
+                showMessage(`ターン ${fullState.gameState.turn_number} へ！`, 'success');
+            }
+        }
+
+        async function updateConfig() {
+            const payload = {
+                use_combo_system: document.getElementById('use_combo_system').checked,
+                use_enemy_preview: document.getElementById('use_enemy_preview').checked,
+            };
+            await postData('/api/update_config', payload);
+            showMessage('設定を更新しました。ゲームをリセットします。', 'success');
+            await resetGame();
+        }
+
+        // --- 初期化 ---
+        document.addEventListener('DOMContentLoaded', fetchGameState);
+    </script>
+</body>
+</html>
